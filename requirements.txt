@@ -5,3 +5,6 @@ uvicorn
 yt-dlp
 spotdl
 python-multipart
+pymongo
+aiogram
+nest_asyncio
