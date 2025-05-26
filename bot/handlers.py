@@ -1,78 +1,137 @@
-# handlers.py
+# handlers.py - updated with better language switching, welcome image, and quality options
 
-from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.types import ParseMode
-from buttons import format_buttons
-from utils import detect_platform, download_media, escape_markdown
-from texts import get_text
-from database import get_user_collection
-from config import ADMIN_IDS
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes
+from bot.downloader import download_media, download_spotify
+from bot.utils import detect_platform
+from bot.texts import get_text
+from bot.config import ADMIN_IDS
+from telegram.constants import ParseMode
+from telegram.helpers import escape_markdown
 import os
+import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient
 
-# Handle download link input
-async def handle_link(message: types.Message, lang: str, state: FSMContext):
-    url = message.text.strip()
+mongo = AsyncIOMotorClient(os.getenv("MONGO_URI"))
+db = mongo["downloader_bot"]
+get_user_collection = lambda: db["users"]
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    users = get_user_collection()
+    user_id = update.effective_user.id
+    await users.update_one({"user_id": user_id}, {"$setOnInsert": {"lang": "en"}}, upsert=True)
+
+    keyboard = [
+        [InlineKeyboardButton("English", callback_data="lang|en"), InlineKeyboardButton("हिन्दी", callback_data="lang|hi")]
+    ]
+    await update.message.reply_photo(
+        photo="https://telegra.ph/file/7d70d9c19f315ed754292.jpg",
+        caption="Welcome to Downloader Bot!\n\nChoose your language to get started:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    users = get_user_collection()
+    user_data = await users.find_one({"user_id": update.effective_user.id})
+    lang = user_data.get("lang", "en")
+    await update.message.reply_text(get_text(lang, "guide"))
+
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user_id = query.from_user.id
+    users = get_user_collection()
+    await query.answer()
+
+    if query.data == "lang_menu":
+        keyboard = [
+            [InlineKeyboardButton("English", callback_data="lang|en"), InlineKeyboardButton("हिन्दी", callback_data="lang|hi")]
+        ]
+        await query.edit_message_text("Choose your language:", reply_markup=InlineKeyboardMarkup(keyboard))
+    elif query.data.startswith("lang|"):
+        lang_code = query.data.split("|")[1]
+        await users.update_one({"user_id": user_id}, {"$set": {"lang": lang_code}})
+        await query.edit_message_caption(get_text(lang_code, "language_selected"))
+    else:
+        await handle_download(update, context)
+
+async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    url = update.message.text.strip()
+    users = get_user_collection()
+    user_data = await users.find_one({"user_id": update.effective_user.id})
+    lang = user_data.get("lang", "en")
     platform = detect_platform(url)
 
-    if platform == "unknown":
-        await message.reply(get_text(lang, "unsupported"))
-        return
-
-    await state.update_data(link=url)
-    await message.reply(get_text(lang, "choose_format"), reply_markup=format_buttons())
-
-# Handle format selection from inline buttons
-async def process_format_selection(call: types.CallbackQuery, state: FSMContext):
-    user_id = call.from_user.id
-    data = await state.get_data()
-    url = data.get("link")
-
-    users = get_user_collection()
-    lang = users.find_one({"_id": user_id}).get("lang", "en")
-
-    audio_only = "audio" in call.data
-    await call.message.answer(get_text(lang, "downloading"))
-
-    result = download_media(url, audio_only=audio_only)
-    if os.path.exists(result):
-        with open(result, "rb") as f:
-            if audio_only:
-                await call.message.answer_audio(f)
-            else:
-                await call.message.answer_video(f)
-        os.remove(result)
+    if platform == "youtube":
+        keyboard = [
+            [InlineKeyboardButton("1080p", callback_data=f"video1080|{url}"), InlineKeyboardButton("720p", callback_data=f"video720|{url}")],
+            [InlineKeyboardButton("480p", callback_data=f"video480|{url}"), InlineKeyboardButton("360p", callback_data=f"video360|{url}")],
+            [InlineKeyboardButton(get_text(lang, "btn_audio"), callback_data=f"audio|{url}")]
+        ]
+        await update.message.reply_text(get_text(lang, "choose_format"), reply_markup=InlineKeyboardMarkup(keyboard))
+    elif platform == "spotify":
+        keyboard = [[InlineKeyboardButton(get_text(lang, "btn_audio"), callback_data=f"spotify|{url}")]]
+        await update.message.reply_text("Spotify audio available:", reply_markup=InlineKeyboardMarkup(keyboard))
+    elif platform == "reso":
+        await update.message.reply_text("Reso support is under development.")
     else:
-        await call.message.answer(f"{get_text(lang, 'error')}{result}")
+        await update.message.reply_text("Unsupported or unknown link.")
 
-    await state.finish()
+async def handle_download(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    users = get_user_collection()
+    user_data = await users.find_one({"user_id": query.from_user.id})
+    lang = user_data.get("lang", "en")
+    format_type, url = query.data.split("|", 1)
+    msg = await query.message.reply_text("Downloading, please wait...")
 
-# Admin broadcast handler
-async def broadcast_command(message: types.Message):
-    if message.from_user.id not in ADMIN_IDS:
-        await message.reply("Access denied.")
+    try:
+        if format_type == "video1080":
+            file_path = download_media(url, "bestvideo[height<=1080]+bestaudio/best")
+        elif format_type == "video720":
+            file_path = download_media(url, "bestvideo[height<=720]+bestaudio/best")
+        elif format_type == "video480":
+            file_path = download_media(url, "bestvideo[height<=480]+bestaudio/best")
+        elif format_type == "video360":
+            file_path = download_media(url, "bestvideo[height<=360]+bestaudio/best")
+        elif format_type == "audio":
+            file_path = download_media(url, "bestaudio")
+        elif format_type == "spotify":
+            file_path = download_spotify(url)
+        else:
+            await msg.edit_text("Unsupported format.")
+            return
+
+        await msg.delete()
+        await query.message.reply_document(document=open(file_path, "rb"))
+        await asyncio.sleep(5)
+        os.remove(file_path)
+    except Exception as e:
+        await msg.edit_text(get_text(lang, "error") + str(e))
+
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        await update.message.reply_text("Access denied.")
         return
 
-    args = message.text.split(" ", 1)
-    if len(args) < 2:
-        await message.reply("Usage: /broadcast Your message here")
+    if not context.args:
+        await update.message.reply_text("Usage: /broadcast Your message here")
         return
 
-    msg = args[1]
+    msg = " ".join(context.args)
     users = get_user_collection()
     all_users = users.find()
 
     sent = failed = 0
-    for user in all_users:
+    async for user in all_users:
         try:
-            await message.bot.send_message(
+            await context.bot.send_message(
                 chat_id=user["user_id"],
-                text=f"📢 *Broadcast:*\n\n{escape_markdown(msg)}",
+                text=f"\U0001F4E2 *Broadcast:*\n\n{escape_markdown(msg)}",
                 parse_mode=ParseMode.MARKDOWN
             )
             sent += 1
-        except Exception:
+        except:
             failed += 1
 
-    await message.reply(f"Broadcast complete.\n✅ Sent: {sent}\n❌ Failed: {failed}")
-    
+    await update.message.reply_text(f"Broadcast complete. Sent: {sent}, Failed: {failed}")
