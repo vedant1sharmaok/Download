@@ -3,6 +3,9 @@
 import re
 import yt_dlp
 
+def escape_markdown(text):
+    return re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', text)
+    
 # Common platform detection using regex (can expand as needed)
 def detect_platform(url: str) -> str:
     patterns = {
