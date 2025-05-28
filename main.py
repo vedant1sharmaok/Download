@@ -102,8 +102,10 @@ async def unknown_cmd(message: types.Message):
     await message.reply(get_text(lang, "unknown_command"))
 
 # Run
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+if __name__ == "__main__":
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
+
     from fastapi import FastAPI
     import uvicorn
 
