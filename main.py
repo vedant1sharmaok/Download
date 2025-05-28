@@ -12,7 +12,7 @@ from texts import get_text, TEXTS
 from buttons import format_buttons
 from utils import detect_platform, download_media
 
-asyncio.run(clear_webhook())
+
 # Bot Token and Mongo
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
