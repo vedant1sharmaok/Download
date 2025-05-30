@@ -101,7 +101,9 @@ app = FastAPI()
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
-    update = Update(**await request.json())
+    data = await request.json()
+    print("Webhook hit with update:", data)
+    update = Update(**data)
     await dp.process_update(update)
     return {"status": "ok"}
 
