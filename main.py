@@ -99,14 +99,15 @@ async def unknown_cmd(message: types.Message):
 # FastAPI app
 app = FastAPI()
 
-@app.post("/webhook")
-async def telegram_webhook(request: Request):
-    data = await request.json()
-    print("Webhook hit with update:", data)
-    update = Update(**data)
-    await dp.process_update(update)
-    return {"status": "ok"}
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+@app.post("/webhook")
+async def process_webhook(update: TelegramUpdate):
+    logger.info(f"📩 Received update: {update}")
+    await dp.feed_update(bot=bot, update=update)
+    return {"ok": True}
+    
 @app.get("/")
 def home():
     return {"status": "bot running"}
