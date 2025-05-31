@@ -7,6 +7,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import Update
 from pymongo import MongoClient
+from telegram import Update
+from telegram import Update as TelegramUpdate
 import os
 from texts import get_text, TEXTS
 from buttons import format_buttons
