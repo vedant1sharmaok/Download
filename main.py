@@ -35,7 +35,13 @@ async def start_cmd(message: types.Message, state: FSMContext):
     await state.finish()
 
     with open("assets/welcome.jpg", "rb") as photo:
-        await bot.send_photo(message.chat.id, photo, caption=get_text("en", "start"))
+        await bot.send_photo(
+    message.chat.id,
+    photo,
+    caption=get_text("en", "start"),
+    parse_mode="MarkdownV2"  # or "MarkdownV2" if you're formatting using Markdown
+)
+
 
     lang_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     for code in TEXTS:
