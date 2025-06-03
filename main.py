@@ -7,8 +7,6 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import Update
 from pymongo import MongoClient
-from telegram import Update
-from telegram import Update as TelegramUpdate
 import os
 from texts import get_text, TEXTS
 from buttons import format_buttons
@@ -101,15 +99,19 @@ async def unknown_cmd(message: types.Message):
 # FastAPI app
 app = FastAPI()
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-@app.post("/webhook")
-async def process_webhook(update: TelegramUpdate):
-    logger.info(f"📩 Received update: {update}")
-    await dp.feed_update(bot=bot, update=update)
-    return {"ok": True}
-    
+
+
+import asyncio
+
+@app.on_event("startup")
+async def on_startup():
+    asyncio.create_task(start_polling())
+
+async def start_polling():
+    await dp.start_polling()
+
+
 @app.get("/")
 def home():
     return {"status": "bot running"}
