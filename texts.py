@@ -2,7 +2,7 @@
 
 TEXTS = {
     "en": {
-        "start": "👋 *Welcome to the Ultimate Downloader Bot!*",
+        "start": "👋 *Welcome to the Ultimate Downloader Bot*",
         "choose_language": "🌐 *Please choose your language:*",
         "language_selected": "✅ Language set to *English*.",
         "guide": (
