@@ -4,22 +4,22 @@ TEXTS = {
     "en": {
         "start": "👋 *Welcome to the Ultimate Downloader Bot*",
         "choose_language": "🌐 *Please choose your language:*",
-        "language_selected": "✅ Language set to *English*.",
+        "language_selected": "✅ Language set to *English*",
         "guide": (
-            "🎥 Send me any video or audio link from platforms like *YouTube, Spotify, Reso, Facebook, Instagram,* and more.\n\n"
-            "⚙️ I'll detect the platform and show you download options.\n"
-            "⬇️ You can choose the quality or format you prefer.\n"
-            "📥 I’ll then download and send the file to you — fast and easy!\n\n"
-            "🛠 Admins can use /broadcast to send messages to all users."
+            "🎥 Send me any video or audio link from platforms like *YouTube, Spotify, Reso, Facebook, Instagram,* and more\n\n"
+            "⚙️ I'll detect the platform and show you download options\n"
+            "⬇️ You can choose the quality or format you prefer\n"
+            "📥 I’ll then download and send the file to you — fast and easy\n\n"
+            "🛠 Admins can use /broadcast to send messages to all users"
         ),
         "choose_format": "🎚 *Select the format or quality:*",
         "btn_audio": "🎵 Audio Only",
-        "downloading": "⏳ Downloading your file... Please wait.",
+        "downloading": "⏳ Downloading your file  Please wait",
         "error": "❌ *Error:* ",
-        "lang_switched": "✅ Language changed successfully!",
-        "unsupported": "⚠️ Sorry, this link is not supported yet.",
+        "lang_switched": "✅ Language changed successfully",
+        "unsupported": "⚠️ Sorry, this link is not supported yet",
         "spotify_audio": "🎧 Spotify audio available:",
-        "unknown_command": "❓ I didn't understand that. Please send a valid link or use /help.",
+        "unknown_command": "❓ I didn't understand that Please send a valid link or use /help",
     },
     "hi": {
         "start": "👋 *डाउनलोडर बॉट में आपका स्वागत है!*",
