@@ -8,10 +8,15 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import Update
 from pymongo import MongoClient
 import os
+import re
+
 from texts import get_text, TEXTS
 from buttons import format_buttons
 from utils import detect_platform, download_media
 
+def escape_markdown(text):
+    return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text)
+    
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 bot = Bot(token=BOT_TOKEN, parse_mode="MarkdownV2")
@@ -92,7 +97,13 @@ async def process_format(call: types.CallbackQuery, state: FSMContext):
                 await bot.send_video(call.message.chat.id, f)
         os.remove(result)
     else:
-        await bot.send_message(call.message.chat.id, f"{get_text(lang, 'error')}{result}")
+        escaped_result = escape_markdown(result)
+await bot.send_message(
+    call.message.chat.id,
+    f"{get_text(lang, 'error')}{escaped_result}",
+    parse_mode="MarkdownV2"
+)
+
 
     await state.finish()
 
