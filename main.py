@@ -39,7 +39,7 @@ async def start_cmd(message: types.Message, state: FSMContext):
     message.chat.id,
     photo,
     caption=get_text("en", "start"),
-    parse_mode="HTML"  # or "MarkdownV2" if you're formatting using Markdown
+    parse_mode="MarkdownV2"  # or "MarkdownV2" if you're formatting using Markdown
 )
 
 
