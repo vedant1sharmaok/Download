@@ -3,7 +3,7 @@
 import re
 import yt_dlp
 
-def escape_markdown(text):
+def escape_md(text):
     return re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', text)
     
 # Common platform detection using regex (can expand as needed)
