@@ -39,7 +39,7 @@ async def start_cmd(message: types.Message, state: FSMContext):
     message.chat.id,
     photo,
     caption=get_text("en", "start"),
-    parse_mode="MarkdownV2"  # or "MarkdownV2" if you're formatting using Markdown
+    parse_mode="HTML"  # or "MarkdownV2" if you're formatting using Markdown
 )
 
 
@@ -92,7 +92,8 @@ async def process_format(call: types.CallbackQuery, state: FSMContext):
                 await bot.send_video(call.message.chat.id, f)
         os.remove(result)
     else:
-        await bot.send_message(call.message.chat.id, f"{get_text(lang, 'error')}{result}")
+        await bot.send_message(call.message.chat.id, f"{get_text(lang, 'error')}{result}", parse_mode="HTML")
+
 
     await state.finish()
 
