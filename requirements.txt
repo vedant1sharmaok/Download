@@ -2,7 +2,7 @@ python-telegram-bot==20.6
 motor
 fastapi
 uvicorn
-yt-dlp
+yt-dlp>=2024.05.27
 spotdl
 python-multipart
 pymongo
