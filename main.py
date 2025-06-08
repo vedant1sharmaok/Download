@@ -14,7 +14,7 @@ from utils import detect_platform, download_media
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-bot = Bot(token=BOT_TOKEN, parse_mode="MarkdownV2")
+bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 # Mongo setup
