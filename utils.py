@@ -17,12 +17,15 @@ def detect_platform(url: str) -> str:
         "tiktok": r"(tiktok\.com)",
         "twitter": r"(twitter\.com|x\.com)",
         "dailymotion": r"(dailymotion\.com)",
+        "pornhub": r"(pornhub\.com)",
+        "xhamster": r"(xhamster\.com)",
     }
 
     for platform, pattern in patterns.items():
         if re.search(pattern, url, re.IGNORECASE):
             return platform
     return "unknown"
+
 
 # Download function using yt-dlp
 def download_media(url: str, audio_only=False):
