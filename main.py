@@ -63,6 +63,12 @@ async def get_link(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     url = message.text.strip()
+
+        status_msg = await message.reply("🔄 Starting download...")
+    file_path = await download_media(url, status_msg)
+    with open(file_path, 'rb') as video:
+        await message.reply_document(video)
+        
     platform = detect_platform(url)
 
     if platform == "unknown":
