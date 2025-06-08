@@ -63,7 +63,8 @@ async def get_link(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     url = message.text.strip()
-        try:
+
+    try:
         status_msg = await message.reply("🔄 Starting download...")
         file_path = await download_media(url, status_msg)
         with open(file_path, 'rb') as video:
@@ -71,8 +72,8 @@ async def get_link(message: types.Message, state: FSMContext):
     except Exception as e:
         await message.reply(f"{get_text(lang, 'error')} {str(e)}")
         return
-    platform = detect_platform(url)
 
+    platform = detect_platform(url)
     if platform == "unknown":
         await message.reply(get_text(lang, "unsupported"))
         return
@@ -80,6 +81,7 @@ async def get_link(message: types.Message, state: FSMContext):
     await state.update_data(link=url)
     await message.reply(get_text(lang, "choose_format"), reply_markup=format_buttons())
     await DownloadState.waiting_for_format.set()
+
 
 @dp.callback_query_handler(state=DownloadState.waiting_for_format)
 async def process_format(call: types.CallbackQuery, state: FSMContext):
