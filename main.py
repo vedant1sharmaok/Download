@@ -57,14 +57,13 @@ async def set_lang(message: types.Message, state: FSMContext):
     users_col.update_one({"_id": user_id}, {"$set": {"lang": lang}})
     await message.reply(get_text(lang, "language_selected"), reply_markup=types.ReplyKeyboardRemove())
     await message.answer(get_text(lang, "guide"))
-
 @dp.message_handler(state=DownloadState.waiting_for_link)
 async def get_link(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     url = message.text.strip()
 
-        try:
+    try:
         status_msg = await message.reply("🔄 Starting download...")
         file_path = await download_media(url, status_msg)
         with open(file_path, 'rb') as video:
@@ -81,7 +80,7 @@ async def get_link(message: types.Message, state: FSMContext):
     await state.update_data(link=url)
     await message.reply(get_text(lang, "choose_format"), reply_markup=format_buttons())
     await DownloadState.waiting_for_format.set()
-
+    
 
 @dp.callback_query_handler(state=DownloadState.waiting_for_format)
 async def process_format(call: types.CallbackQuery, state: FSMContext):
