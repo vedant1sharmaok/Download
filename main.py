@@ -63,7 +63,6 @@ async def get_link(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     url = message.text.strip()
-
         try:
         status_msg = await message.reply("🔄 Starting download...")
         file_path = await download_media(url, status_msg)
@@ -72,7 +71,6 @@ async def get_link(message: types.Message, state: FSMContext):
     except Exception as e:
         await message.reply(f"{get_text(lang, 'error')} {str(e)}")
         return
-        
     platform = detect_platform(url)
 
     if platform == "unknown":
