@@ -16,7 +16,7 @@ def detect_platform(url: str) -> str:
         "instagram": r"(instagram\.com)",
         "tiktok": r"(tiktok\.com)",
         "twitter": r"(twitter\.com|x\.com)",
-        "dailymotion": r"(dailymotion\.com)",
+        "dailymotion": r"(dai.ly\.com)",
         "pornhub": r"(pornhub\.com)",
         "xhamster": r"(xhamster\.com)",
     }
