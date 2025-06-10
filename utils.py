@@ -32,7 +32,7 @@ def download_media(url: str, audio_only=False, quality=None):
 
     try:
         ydl_opts = {
-            
+            'format': quality or ('bestaudio/best' if audio_only else 'best'),
             'outtmpl': 'downloads/%(title)s.%(ext)s',
             'quiet': True,
             'noplaylist': True,
