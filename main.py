@@ -4,43 +4,47 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import Update
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.exceptions import MessageNotModified
 from pymongo import MongoClient
 import os
 import asyncio
+
 from texts import get_text, TEXTS
 from buttons import format_buttons
 from utils import detect_platform, download_media
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+# Quality button keyboard
 def quality_buttons():
     keyboard = InlineKeyboardMarkup(row_width=2)
-    qualities = ["144p", "360p", "480p", "720p", "1080p"]
-    buttons = [InlineKeyboardButton(text=q, callback_data=f"quality:{q}") for q in qualities]
-    keyboard.add(*buttons)
+    for q in ["144p", "360p", "480p", "720p", "1080p"]:
+        keyboard.insert(InlineKeyboardButton(text=q, callback_data=f"quality:{q}"))
     return keyboard
 
-from aiogram.utils.exceptions import MessageNotModified
-
-def create_progress_hook(bot, chat_id, message_id):
-    async def hook(d):
+# Progress hook to update download status
+def create_progress_hook(bot, chat_id, message_id, loop):
+    def hook(d):
         if d['status'] == 'downloading':
-            try:
-                percent = d.get('_percent_str', '').strip()
-                speed = d.get('_speed_str', '').strip()
-                eta = d.get('eta', '?')
-                text = f"📥 Downloading: {percent} at {speed} ETA: {eta}s"
-                await bot.edit_message_text(text, chat_id, message_id)
-            except MessageNotModified:
-                pass
+            percent = d.get('_percent_str', '').strip()
+            speed = d.get('_speed_str', '').strip()
+            eta = d.get('eta', '?')
+            text = f"📥 Downloading: {percent} at {speed} | ETA: {eta}s"
+
+            async def update():
+                try:
+                    await bot.edit_message_text(text, chat_id, message_id)
+                except MessageNotModified:
+                    pass
+
+            asyncio.run_coroutine_threadsafe(update(), loop)
     return hook
-    
+
+# Bot setup
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher(bot, storage=MemoryStorage())
 
-# Mongo setup
 client = MongoClient(MONGO_URI)
 db = client["tg_downloader"]
 users_col = db["users"]
@@ -50,6 +54,7 @@ class DownloadState(StatesGroup):
     waiting_for_link = State()
     waiting_for_format = State()
     waiting_for_quality = State()
+
 # /start command
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message, state: FSMContext):
@@ -58,12 +63,7 @@ async def start_cmd(message: types.Message, state: FSMContext):
     await state.finish()
 
     with open("assets/welcome.jpg", "rb") as photo:
-        await bot.send_photo(
-            message.chat.id,
-            photo,
-            caption=get_text("en", "start"),
-            parse_mode="HTML"
-        )
+        await bot.send_photo(message.chat.id, photo, caption=get_text("en", "start"))
 
     lang_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     for code in TEXTS:
@@ -76,44 +76,36 @@ async def start_cmd(message: types.Message, state: FSMContext):
 @dp.message_handler(lambda m: m.text.lower() in TEXTS.keys(), state=DownloadState.waiting_for_link)
 async def set_lang(message: types.Message, state: FSMContext):
     lang = message.text.lower()
-    user_id = message.from_user.id
-    users_col.update_one({"_id": user_id}, {"$set": {"lang": lang}})
+    users_col.update_one({"_id": message.from_user.id}, {"$set": {"lang": lang}})
     await message.reply(get_text(lang, "language_selected"), reply_markup=types.ReplyKeyboardRemove())
     await message.answer(get_text(lang, "guide"))
 
-# Link handler
+# Handle link input
 @dp.message_handler(state=DownloadState.waiting_for_link)
 async def get_link(message: types.Message, state: FSMContext):
+    url = message.text.strip()
     user_id = message.from_user.id
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
-    url = message.text.strip()
 
     platform = detect_platform(url)
     if platform == "unknown":
         await message.reply(get_text(lang, "unsupported"))
         return
 
-    try:
-        status_msg = await message.reply("🔄 Starting download...")
-        file_path = download_media(url)
-        if not file_path or not os.path.exists(file_path):
-            await status_msg.edit_text("❌ Download failed.")
-            return
-
-        await status_msg.edit_text("✅ Download complete.")
-        with open(file_path, 'rb') as file:
-            await message.reply_document(file)
-        os.remove(file_path)
-    except Exception as e:
-        await message.reply(f"{get_text(lang, 'error')} {str(e)}")
-        return
-
     await state.update_data(link=url)
     await message.reply(get_text(lang, "choose_format"), reply_markup=format_buttons())
     await DownloadState.waiting_for_format.set()
-    
-# Quality
 
+# Handle format (audio/video) choice
+@dp.callback_query_handler(state=DownloadState.waiting_for_format)
+async def process_format(call: types.CallbackQuery, state: FSMContext):
+    audio_only = "audio" in call.data
+    await state.update_data(audio_only=audio_only)
+    await call.message.edit_reply_markup()
+    await call.message.answer("🔽 Choose quality:", reply_markup=quality_buttons())
+    await DownloadState.waiting_for_quality.set()
+
+# Handle quality choice and download
 @dp.callback_query_handler(lambda c: c.data.startswith("quality:"), state=DownloadState.waiting_for_quality)
 async def process_quality(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
@@ -123,59 +115,32 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
     url = data.get("link")
     audio_only = data.get("audio_only", False)
 
-    msg = await callback_query.message.answer("⏬ Downloading...")
+    msg = await callback_query.message.answer("⏳ Starting download...")
+    loop = asyncio.get_event_loop()
+    hook = create_progress_hook(bot, callback_query.message.chat.id, msg.message_id, loop)
 
-    file_path = download_media(url, audio_only=audio_only, quality=quality)
-    if os.path.exists(file_path):
-        await callback_query.message.answer_document(open(file_path, "rb"))
+    file_path = download_media(url, audio_only=audio_only, quality=quality, progress_hook=hook)
+
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            if audio_only:
+                await callback_query.message.answer_audio(f)
+            else:
+                await callback_query.message.answer_video(f)
         os.remove(file_path)
     else:
         await callback_query.message.answer("❌ Failed to download.")
-msg = await callback_query.message.answer("⏳ Preparing to download...")
-hook = create_progress_hook(bot, callback_query.message.chat.id, msg.message_id)
-
-file_path = download_media(url, audio_only=audio_only, quality=quality, progress_hook=hook)
-
-    await state.finish()
-    
-# Format handler
-@dp.callback_query_handler(state=DownloadState.waiting_for_format)
-async def process_format(call: types.CallbackQuery, state: FSMContext):
-    user_id = call.from_user.id
-    lang = users_col.find_one({"_id": user_id}).get("lang", "en")
-    data = await state.get_data()
-    url = data.get("link")
-    audio_only = "audio" in call.data
-
-    await bot.send_message(call.message.chat.id, get_text(lang, "downloading"))
-    await state.update_data(audio_only=(format_choice == "audio"))
-    await message.reply("🔽 Choose quality:", reply_markup=quality_buttons())
-    await DownloadState.waiting_for_quality.set()
-    
-    try:
-        result = download_media(url, audio_only=audio_only)
-        if os.path.exists(result):
-            with open(result, "rb") as f:
-                if audio_only:
-                    await bot.send_audio(call.message.chat.id, f)
-                else:
-                    await bot.send_video(call.message.chat.id, f)
-            os.remove(result)
-        else:
-            await bot.send_message(call.message.chat.id, f"{get_text(lang, 'error')}{result}")
-    except Exception as e:
-        await bot.send_message(call.message.chat.id, f"❌ Failed: {str(e)}")
 
     await state.finish()
 
-# Fallback for unknown messages
+# Fallback for unknown or invalid messages
 @dp.message_handler()
 async def unknown_cmd(message: types.Message):
     user_id = message.from_user.id
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     await message.reply(get_text(lang, "unknown_command"))
 
-# FastAPI instance
+# FastAPI setup
 app = FastAPI()
 
 @app.get("/")
@@ -188,3 +153,5 @@ async def on_startup():
 
 async def start_polling():
     await dp.start_polling()
+                
+
