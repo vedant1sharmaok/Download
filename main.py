@@ -131,6 +131,10 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
         os.remove(file_path)
     else:
         await callback_query.message.answer("❌ Failed to download.")
+msg = await callback_query.message.answer("⏳ Preparing to download...")
+hook = create_progress_hook(bot, callback_query.message.chat.id, msg.message_id)
+
+file_path = download_media(url, audio_only=audio_only, quality=quality, progress_hook=hook)
 
     await state.finish()
     
