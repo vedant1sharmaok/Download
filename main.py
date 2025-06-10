@@ -19,6 +19,21 @@ def quality_buttons():
     buttons = [InlineKeyboardButton(text=q, callback_data=f"quality:{q}") for q in qualities]
     keyboard.add(*buttons)
     return keyboard
+
+from aiogram.utils.exceptions import MessageNotModified
+
+def create_progress_hook(bot, chat_id, message_id):
+    async def hook(d):
+        if d['status'] == 'downloading':
+            try:
+                percent = d.get('_percent_str', '').strip()
+                speed = d.get('_speed_str', '').strip()
+                eta = d.get('eta', '?')
+                text = f"📥 Downloading: {percent} at {speed} ETA: {eta}s"
+                await bot.edit_message_text(text, chat_id, message_id)
+            except MessageNotModified:
+                pass
+    return hook
     
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
@@ -96,7 +111,29 @@ async def get_link(message: types.Message, state: FSMContext):
     await state.update_data(link=url)
     await message.reply(get_text(lang, "choose_format"), reply_markup=format_buttons())
     await DownloadState.waiting_for_format.set()
+    
+# Quality
 
+@dp.callback_query_handler(lambda c: c.data.startswith("quality:"), state=DownloadState.waiting_for_quality)
+async def process_quality(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    quality = callback_query.data.split(":")[1]
+
+    data = await state.get_data()
+    url = data.get("link")
+    audio_only = data.get("audio_only", False)
+
+    msg = await callback_query.message.answer("⏬ Downloading...")
+
+    file_path = download_media(url, audio_only=audio_only, quality=quality)
+    if os.path.exists(file_path):
+        await callback_query.message.answer_document(open(file_path, "rb"))
+        os.remove(file_path)
+    else:
+        await callback_query.message.answer("❌ Failed to download.")
+
+    await state.finish()
+    
 # Format handler
 @dp.callback_query_handler(state=DownloadState.waiting_for_format)
 async def process_format(call: types.CallbackQuery, state: FSMContext):
@@ -107,7 +144,10 @@ async def process_format(call: types.CallbackQuery, state: FSMContext):
     audio_only = "audio" in call.data
 
     await bot.send_message(call.message.chat.id, get_text(lang, "downloading"))
-
+    await state.update_data(audio_only=(format_choice == "audio"))
+    await message.reply("🔽 Choose quality:", reply_markup=quality_buttons())
+    await DownloadState.waiting_for_quality.set()
+    
     try:
         result = download_media(url, audio_only=audio_only)
         if os.path.exists(result):
