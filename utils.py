@@ -1,12 +1,10 @@
-# utils.py
-
+import os
 import re
 import yt_dlp
 
 def escape_md(text):
     return re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', text)
-    
-# Common platform detection using regex (can expand as needed)
+
 def detect_platform(url: str) -> str:
     patterns = {
         "youtube": r"(youtube\.com|youtu\.be)",
@@ -16,34 +14,30 @@ def detect_platform(url: str) -> str:
         "instagram": r"(instagram\.com)",
         "tiktok": r"(tiktok\.com)",
         "twitter": r"(twitter\.com|x\.com)",
-        "dailymotion": r"(dai.ly\.com)",
+        "dailymotion": r"(dai\.ly|dailymotion\.com)",
         "pornhub": r"(pornhub\.com)",
         "xhamster": r"(xhamster\.com)",
     }
-
     for platform, pattern in patterns.items():
         if re.search(pattern, url, re.IGNORECASE):
             return platform
     return "unknown"
 
-
-# Download function using yt-dlp
 def download_media(url: str, audio_only=False, quality=None, progress_hook=None):
-
     try:
+        os.makedirs("downloads", exist_ok=True)
         ydl_opts = {
-    'format': quality or ('bestaudio/best' if audio_only else 'best'),
-    'outtmpl': 'downloads/%(title)s.%(ext)s',
-    'noplaylist': True,
-    'quiet': False,
-    'progress_hooks': [progress_hook] if progress_hook else [],
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }] if audio_only else [],
-}
-
+            'format': quality or ('bestaudio/best' if audio_only else 'best'),
+            'outtmpl': 'downloads/%(title)s.%(ext)s',
+            'noplaylist': True,
+            'quiet': False,
+            'progress_hooks': [progress_hook] if progress_hook else [],
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }] if audio_only else [],
+        }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -53,3 +47,4 @@ def download_media(url: str, audio_only=False, quality=None, progress_hook=None)
             return filename
     except Exception as e:
         return str(e)
+    
