@@ -28,20 +28,22 @@ def detect_platform(url: str) -> str:
 
 
 # Download function using yt-dlp
-def download_media(url: str, audio_only=False, quality=None):
+def download_media(url: str, audio_only=False, quality=None, progress_hook=None):
 
     try:
         ydl_opts = {
-            'format': quality or ('bestaudio/best' if audio_only else 'best'),
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
-            'quiet': True,
-            'noplaylist': True,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }] if audio_only else [],
-        }
+    'format': quality or ('bestaudio/best' if audio_only else 'best'),
+    'outtmpl': 'downloads/%(title)s.%(ext)s',
+    'noplaylist': True,
+    'quiet': False,
+    'progress_hooks': [progress_hook] if progress_hook else [],
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }] if audio_only else [],
+}
+
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
