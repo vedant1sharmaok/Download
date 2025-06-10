@@ -11,7 +11,15 @@ import asyncio
 from texts import get_text, TEXTS
 from buttons import format_buttons
 from utils import detect_platform, download_media
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+def quality_buttons():
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    qualities = ["144p", "360p", "480p", "720p", "1080p"]
+    buttons = [InlineKeyboardButton(text=q, callback_data=f"quality:{q}") for q in qualities]
+    keyboard.add(*buttons)
+    return keyboard
+    
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -26,7 +34,7 @@ users_col = db["users"]
 class DownloadState(StatesGroup):
     waiting_for_link = State()
     waiting_for_format = State()
-
+    waiting_for_quality = State()
 # /start command
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message, state: FSMContext):
