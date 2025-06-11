@@ -114,7 +114,10 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
 if quality == "Best":
     quality = None  # Will signal utils to use best quality
 
+    @dp.callback_query_handler(...)
+async def some_callback_handler(...):
     data = await state.get_data()
+
     url = data.get("link")
     audio_only = data.get("audio_only", False)
 
