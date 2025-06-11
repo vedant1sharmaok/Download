@@ -106,16 +106,16 @@ async def process_format(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer("🔽 Choose quality:", reply_markup=quality_buttons())
     await DownloadState.waiting_for_quality.set()
 
+# ... (everything above remains unchanged)
+
 # Handle quality choice and download
 @dp.callback_query_handler(lambda c: c.data.startswith("quality:"), state=DownloadState.waiting_for_quality)
 async def process_quality(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
     quality = callback_query.data.split(":")[1]
-if quality == "Best":
-    quality = None  # Will signal utils to use best quality
+    if quality == "Best":
+        quality = None  # Will signal utils to use best quality
 
-    @dp.callback_query_handler(...)
-async def some_callback_handler(...):
     data = await state.get_data()
 
     url = data.get("link")
@@ -159,5 +159,4 @@ async def on_startup():
 
 async def start_polling():
     await dp.start_polling()
-                
-
+                         
