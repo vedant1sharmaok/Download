@@ -1,6 +1,7 @@
 import os
 import re
 import yt_dlp
+from yt_dlp.utils import sanitize_filename
 
 def escape_md(text):
     return re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', text)
@@ -28,7 +29,7 @@ def download_media(url: str, audio_only=False, quality=None, progress_hook=None)
         os.makedirs("downloads", exist_ok=True)
         ydl_opts = {
             'format': quality or ('bestaudio/best' if audio_only else 'best'),
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
+            'outtmpl': 'downloads/%(title).70s.%(ext)s',
             'noplaylist': True,
             'quiet': False,
             'progress_hooks': [progress_hook] if progress_hook else [],
