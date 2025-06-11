@@ -17,7 +17,8 @@ from utils import detect_platform, download_media
 # Quality button keyboard
 def quality_buttons():
     keyboard = InlineKeyboardMarkup(row_width=2)
-    for q in ["144p", "360p", "480p", "720p", "1080p"]:
+    for q in ["Best", "144p", "360p", "480p", "720p", "1080p"]:
+
         keyboard.insert(InlineKeyboardButton(text=q, callback_data=f"quality:{q}"))
     return keyboard
 
@@ -110,6 +111,8 @@ async def process_format(call: types.CallbackQuery, state: FSMContext):
 async def process_quality(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
     quality = callback_query.data.split(":")[1]
+if quality == "Best":
+    quality = None  # Will signal utils to use best quality
 
     data = await state.get_data()
     url = data.get("link")
