@@ -128,14 +128,21 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
     file_path = download_media(url, audio_only=audio_only, quality=quality, progress_hook=hook)
 
     if file_path and os.path.exists(file_path):
-        with open(file_path, 'rb') as f:
-            if audio_only:
-                await callback_query.message.answer_audio(f)
-            else:
-                await callback_query.message.answer_video(f)
-        os.remove(file_path)
-    else:
-        await callback_query.message.answer("❌ Failed to download.")
+    file_size = os.path.getsize(file_path)
+
+    if file_size > 2 * 1024 * 1024 * 1024:
+        await callback_query.message.answer("❌ File is too large to send. (Limit: 2GB)")
+        os.remove(file_path)
+        return
+
+    with open(file_path, 'rb') as f:
+        if audio_only:
+            await callback_query.message.answer_audio(f)
+        else:
+            await callback_query.message.answer_video(f)
+    os.remove(file_path)
+else:
+    await callback_query.message.answer("❌ Failed to download.")
 
     await state.finish()
 
