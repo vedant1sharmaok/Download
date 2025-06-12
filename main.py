@@ -18,7 +18,6 @@ from utils import detect_platform, download_media
 def quality_buttons():
     keyboard = InlineKeyboardMarkup(row_width=2)
     for q in ["Best", "144p", "360p", "480p", "720p", "1080p"]:
-
         keyboard.insert(InlineKeyboardButton(text=q, callback_data=f"quality:{q}"))
     return keyboard
 
@@ -106,8 +105,6 @@ async def process_format(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer("🔽 Choose quality:", reply_markup=quality_buttons())
     await DownloadState.waiting_for_quality.set()
 
-# ... (everything above remains unchanged)
-
 # Handle quality choice and download
 @dp.callback_query_handler(lambda c: c.data.startswith("quality:"), state=DownloadState.waiting_for_quality)
 async def process_quality(callback_query: types.CallbackQuery, state: FSMContext):
@@ -117,7 +114,6 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
         quality = None  # Will signal utils to use best quality
 
     data = await state.get_data()
-
     url = data.get("link")
     audio_only = data.get("audio_only", False)
 
@@ -125,24 +121,24 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
     loop = asyncio.get_event_loop()
     hook = create_progress_hook(bot, callback_query.message.chat.id, msg.message_id, loop)
 
-    file_path = download_media(url, audio_only=audio_only, quality=quality, progress_hook=hook)
+    file_path = await download_media(url, audio_only=audio_only, quality=quality, progress_hook=hook)
 
     if file_path and os.path.exists(file_path):
-    file_size = os.path.getsize(file_path)
+        file_size = os.path.getsize(file_path)
 
-    if file_size > 2 * 1024 * 1024 * 1024:
-        await callback_query.message.answer("❌ File is too large to send. (Limit: 2GB)")
-        os.remove(file_path)
-        return
+        if file_size > 2 * 1024 * 1024 * 1024:
+            await callback_query.message.answer("❌ File is too large to send. (Limit: 2GB)")
+            os.remove(file_path)
+            return
 
-    with open(file_path, 'rb') as f:
-        if audio_only:
-            await callback_query.message.answer_audio(f)
-        else:
-            await callback_query.message.answer_video(f)
-    os.remove(file_path)
-else:
-    await callback_query.message.answer("❌ Failed to download.")
+        with open(file_path, 'rb') as f:
+            if audio_only:
+                await callback_query.message.answer_audio(f)
+            else:
+                await callback_query.message.answer_video(f)
+        os.remove(file_path)
+    else:
+        await callback_query.message.answer("❌ Failed to download.")
 
     await state.finish()
 
@@ -166,4 +162,4 @@ async def on_startup():
 
 async def start_polling():
     await dp.start_polling()
-                         
+    
