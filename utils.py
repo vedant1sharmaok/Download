@@ -3,6 +3,8 @@ import re
 import yt_dlp
 from yt_dlp.utils import sanitize_filename
 
+MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2GB in bytes
+
 def escape_md(text):
     return re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', text)
 
@@ -45,7 +47,14 @@ def download_media(url: str, audio_only=False, quality=None, progress_hook=None)
             filename = ydl.prepare_filename(info)
             if audio_only and 'ext' in info:
                 filename = filename.rsplit('.', 1)[0] + '.mp3'
+
+            # Check file size
+            if os.path.getsize(filename) > MAX_FILE_SIZE:
+                os.remove(filename)  # Optional: clean up large file
+                return "ERROR: File size exceeds 2GB limit. Cannot send via Telegram."
+
             return filename
+
     except Exception as e:
         return str(e)
-    
+                    
