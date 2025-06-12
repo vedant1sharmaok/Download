@@ -3,6 +3,7 @@ import yt_dlp
 from aiogram.types import Message
 
 DOWNLOAD_DIR = "./downloads"
+MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2GB in bytes
 
 
 def build_telegram_progress_hook(message: Message):
@@ -43,7 +44,19 @@ async def download_media(url: str, tg_msg: Message, format_code: str = "best") -
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
-        return ydl.prepare_filename(info)
+        file_path = ydl.prepare_filename(info)
+
+        # Adjust path if audio was postprocessed
+        if 'audio' in format_code:
+            file_path = os.path.splitext(file_path)[0] + '.mp3'
+
+        # Check file size
+        if os.path.getsize(file_path) > MAX_FILE_SIZE:
+            os.remove(file_path)
+            await tg_msg.reply("❌ File is larger than 2GB and cannot be sent via Telegram.")
+            return None
+
+        return file_path
 
 
 async def download_spotify(url: str) -> str:
@@ -57,3 +70,4 @@ async def download_spotify(url: str) -> str:
         reverse=True
     )
     return os.path.join(output_dir, files[0]) if files else None
+            
