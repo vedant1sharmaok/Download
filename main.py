@@ -115,15 +115,23 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
         download_media, url, audio_only=audio_only, quality=quality, progress_hook=hook
     )
 
+    if file_path == "ERROR_FILE_TOO_LARGE":
+        await callback_query.message.answer("❌ File is too large to send via Telegram (limit: 2GB).")
+        return
+
+    if file_path.startswith("ERROR"):
+        await callback_query.message.answer(f"❌ Error during download:\n{file_path}")
+        return
+
     if file_path and os.path.exists(file_path):
         file_size = os.path.getsize(file_path)
         size_mb = file_size / (1024 * 1024)
-        await callback_query.message.answer(f"✅ Downloaded file size: {size_mb:.2f} MB")
+        await callback_query.message.answer(f"✅ File downloaded: {size_mb:.2f} MB")
 
+        # Try compression if video is too large
         if file_size > 2 * 1024 * 1024 * 1024 and not audio_only:
-            await callback_query.message.answer("⚠ File too large! Trying to compress using FFmpeg...")
+            await callback_query.message.answer("⚠ File too large! Trying to compress with FFmpeg...")
             compressed_path = file_path.replace(".mp4", "_compressed.mp4")
-
             cmd = [
                 "ffmpeg", "-i", file_path, "-vcodec", "libx264", "-crf", "32",
                 "-preset", "fast", compressed_path
@@ -140,7 +148,7 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
                     await state.finish()
                     return
                 else:
-                    await callback_query.message.answer("❌ Compressed file still too large to send.")
+                    await callback_query.message.answer("❌ Even after compression, file is too large.")
                     os.remove(compressed_path)
             os.remove(file_path)
             return
@@ -158,7 +166,6 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
         os.remove(file_path)
     else:
         await callback_query.message.answer("❌ Failed to download.")
-
     await state.finish()
 
 @dp.message_handler()
@@ -167,6 +174,7 @@ async def unknown_cmd(message: types.Message):
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     await message.reply(get_text(lang, "unknown_command"))
 
+# FastAPI setup
 app = FastAPI()
 
 @app.get("/")
@@ -179,4 +187,3 @@ async def on_startup():
 
 async def start_polling():
     await dp.start_polling()
-        
