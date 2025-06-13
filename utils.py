@@ -29,6 +29,7 @@ def detect_platform(url: str) -> str:
 def download_media(url: str, audio_only=False, quality=None, progress_hook=None):
     try:
         os.makedirs("downloads", exist_ok=True)
+
         ydl_opts = {
             'format': quality or ('bestaudio/best' if audio_only else 'best'),
             'outtmpl': 'downloads/%(title).70s.%(ext)s',
@@ -45,16 +46,22 @@ def download_media(url: str, audio_only=False, quality=None, progress_hook=None)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
-            if audio_only and 'ext' in info:
-                filename = filename.rsplit('.', 1)[0] + '.mp3'
+
+            # Ensure filename is safe
+            filename = sanitize_filename(filename)
+
+            # Use mp3 extension if audio-only
+            if audio_only:
+                filename = os.path.splitext(filename)[0] + '.mp3'
 
             # Check file size
-            if os.path.getsize(filename) > MAX_FILE_SIZE:
-                os.remove(filename)  # Optional: clean up large file
-                return "ERROR: File size exceeds 2GB limit. Cannot send via Telegram."
+            file_size = os.path.getsize(filename)
+            if file_size > MAX_FILE_SIZE:
+                os.remove(filename)
+                return "ERROR_FILE_TOO_LARGE"
 
             return filename
 
     except Exception as e:
-        return str(e)
-                    
+        return f"ERROR: {str(e)}"
+        
