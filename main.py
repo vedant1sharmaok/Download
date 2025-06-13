@@ -111,7 +111,7 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
     await callback_query.answer()
     quality = callback_query.data.split(":")[1]
     if quality == "Best":
-        quality = None  # Will signal utils to use best quality
+        quality = None
 
     data = await state.get_data()
     url = data.get("link")
@@ -121,7 +121,10 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
     loop = asyncio.get_event_loop()
     hook = create_progress_hook(bot, callback_query.message.chat.id, msg.message_id, loop)
 
-    file_path = await download_media(url, audio_only=audio_only, quality=quality, progress_hook=hook)
+    # ✅ FIXED: run sync download in thread
+    file_path = await asyncio.to_thread(
+        download_media, url, audio_only=audio_only, quality=quality, progress_hook=hook
+    )
 
     if file_path and os.path.exists(file_path):
         file_size = os.path.getsize(file_path)
