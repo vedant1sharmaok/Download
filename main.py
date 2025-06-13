@@ -9,19 +9,18 @@ from aiogram.utils.exceptions import MessageNotModified
 from pymongo import MongoClient
 import os
 import asyncio
+import subprocess
 
 from texts import get_text, TEXTS
 from buttons import format_buttons
 from utils import detect_platform, download_media
 
-# Quality button keyboard
 def quality_buttons():
     keyboard = InlineKeyboardMarkup(row_width=2)
     for q in ["Best", "144p", "360p", "480p", "720p", "1080p"]:
         keyboard.insert(InlineKeyboardButton(text=q, callback_data=f"quality:{q}"))
     return keyboard
 
-# Progress hook to update download status
 def create_progress_hook(bot, chat_id, message_id, loop):
     def hook(d):
         if d['status'] == 'downloading':
@@ -29,17 +28,14 @@ def create_progress_hook(bot, chat_id, message_id, loop):
             speed = d.get('_speed_str', '').strip()
             eta = d.get('eta', '?')
             text = f"📥 Downloading: {percent} at {speed} | ETA: {eta}s"
-
             async def update():
                 try:
                     await bot.edit_message_text(text, chat_id, message_id)
                 except MessageNotModified:
                     pass
-
             asyncio.run_coroutine_threadsafe(update(), loop)
     return hook
 
-# Bot setup
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
@@ -49,13 +45,11 @@ client = MongoClient(MONGO_URI)
 db = client["tg_downloader"]
 users_col = db["users"]
 
-# FSM states
 class DownloadState(StatesGroup):
     waiting_for_link = State()
     waiting_for_format = State()
     waiting_for_quality = State()
 
-# /start command
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
@@ -72,7 +66,6 @@ async def start_cmd(message: types.Message, state: FSMContext):
     await message.answer(get_text("en", "choose_language"), reply_markup=lang_keyboard)
     await DownloadState.waiting_for_link.set()
 
-# Language selection
 @dp.message_handler(lambda m: m.text.lower() in TEXTS.keys(), state=DownloadState.waiting_for_link)
 async def set_lang(message: types.Message, state: FSMContext):
     lang = message.text.lower()
@@ -80,7 +73,6 @@ async def set_lang(message: types.Message, state: FSMContext):
     await message.reply(get_text(lang, "language_selected"), reply_markup=types.ReplyKeyboardRemove())
     await message.answer(get_text(lang, "guide"))
 
-# Handle link input
 @dp.message_handler(state=DownloadState.waiting_for_link)
 async def get_link(message: types.Message, state: FSMContext):
     url = message.text.strip()
@@ -96,7 +88,6 @@ async def get_link(message: types.Message, state: FSMContext):
     await message.reply(get_text(lang, "choose_format"), reply_markup=format_buttons())
     await DownloadState.waiting_for_format.set()
 
-# Handle format (audio/video) choice
 @dp.callback_query_handler(state=DownloadState.waiting_for_format)
 async def process_format(call: types.CallbackQuery, state: FSMContext):
     audio_only = "audio" in call.data
@@ -105,7 +96,6 @@ async def process_format(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer("🔽 Choose quality:", reply_markup=quality_buttons())
     await DownloadState.waiting_for_quality.set()
 
-# Handle quality choice and download
 @dp.callback_query_handler(lambda c: c.data.startswith("quality:"), state=DownloadState.waiting_for_quality)
 async def process_quality(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
@@ -121,13 +111,39 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
     loop = asyncio.get_event_loop()
     hook = create_progress_hook(bot, callback_query.message.chat.id, msg.message_id, loop)
 
-    # ✅ FIXED: run sync download in thread
     file_path = await asyncio.to_thread(
         download_media, url, audio_only=audio_only, quality=quality, progress_hook=hook
     )
 
     if file_path and os.path.exists(file_path):
         file_size = os.path.getsize(file_path)
+        size_mb = file_size / (1024 * 1024)
+        await callback_query.message.answer(f"✅ Downloaded file size: {size_mb:.2f} MB")
+
+        if file_size > 2 * 1024 * 1024 * 1024 and not audio_only:
+            await callback_query.message.answer("⚠ File too large! Trying to compress using FFmpeg...")
+            compressed_path = file_path.replace(".mp4", "_compressed.mp4")
+
+            cmd = [
+                "ffmpeg", "-i", file_path, "-vcodec", "libx264", "-crf", "32",
+                "-preset", "fast", compressed_path
+            ]
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            if os.path.exists(compressed_path):
+                compressed_size = os.path.getsize(compressed_path)
+                if compressed_size <= 2 * 1024 * 1024 * 1024:
+                    with open(compressed_path, 'rb') as f:
+                        await callback_query.message.answer_video(f)
+                    os.remove(compressed_path)
+                    os.remove(file_path)
+                    await state.finish()
+                    return
+                else:
+                    await callback_query.message.answer("❌ Compressed file still too large to send.")
+                    os.remove(compressed_path)
+            os.remove(file_path)
+            return
 
         if file_size > 2 * 1024 * 1024 * 1024:
             await callback_query.message.answer("❌ File is too large to send. (Limit: 2GB)")
@@ -145,14 +161,12 @@ async def process_quality(callback_query: types.CallbackQuery, state: FSMContext
 
     await state.finish()
 
-# Fallback for unknown or invalid messages
 @dp.message_handler()
 async def unknown_cmd(message: types.Message):
     user_id = message.from_user.id
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     await message.reply(get_text(lang, "unknown_command"))
 
-# FastAPI setup
 app = FastAPI()
 
 @app.get("/")
@@ -165,4 +179,4 @@ async def on_startup():
 
 async def start_polling():
     await dp.start_polling()
-    
+        
