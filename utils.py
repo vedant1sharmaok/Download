@@ -31,16 +31,16 @@ def download_media(url: str, audio_only=False, quality=None, progress_hook=None)
         os.makedirs("downloads", exist_ok=True)
 
         ydl_opts = {
-            'format': quality or ('bestaudio/best' if audio_only else 'best'),
-            'outtmpl': 'downloads/%(title).70s.%(ext)s',
-            'noplaylist': True,
-            'quiet': False,
-            'progress_hooks': [progress_hook] if progress_hook else [],
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }] if audio_only else [],
+            "format": quality or ('bestaudio/best' if audio_only else 'best'),
+            "outtmpl": "downloads/%(title).200s.%(ext)s",
+            "noplaylist": True,
+            "quiet": True,
+            "no_warnings": True,
+            "restrictfilenames": True,
+            "postprocessors": [],  # No FFmpeg postprocessing
+            "postprocessor_args": [],
+            "ffmpeg_location": "disabled",
+            "progress_hooks": [progress_hook] if progress_hook else [],
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -49,10 +49,6 @@ def download_media(url: str, audio_only=False, quality=None, progress_hook=None)
 
             # Ensure filename is safe
             filename = sanitize_filename(filename)
-
-            # Use mp3 extension if audio-only
-            if audio_only:
-                filename = os.path.splitext(filename)[0] + '.mp3'
 
             # Check file size
             file_size = os.path.getsize(filename)
@@ -64,4 +60,4 @@ def download_media(url: str, audio_only=False, quality=None, progress_hook=None)
 
     except Exception as e:
         return f"ERROR: {str(e)}"
-        
+    
