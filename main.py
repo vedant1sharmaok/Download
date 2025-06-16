@@ -49,22 +49,94 @@ class DownloadState(StatesGroup):
     waiting_for_format = State()
     waiting_for_quality = State()
 
+# ---------- Force Join + Start Command ----------
 @dp.message_handler(commands=['start'])
 async def start_cmd(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     users_col.update_one({"_id": user_id}, {"$setOnInsert": {"lang": "en"}}, upsert=True)
     await state.finish()
 
-    with open("assets/welcome.jpg", "rb") as photo:
-        await bot.send_photo(message.chat.id, photo, caption=get_text("en", "start"))
+    # Force join logic (optional): Replace with your actual channel IDs
+    required_channels = ["@ChannelOne", "@ChannelTwo"]
+    user = await bot.get_chat_member(required_channels[0], user_id)
+    if user.status not in ("member", "administrator", "creator"):
+        markup = InlineKeyboardMarkup().add(
+            *[InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.lstrip('@')}") for ch in required_channels],
+            InlineKeyboardButton("✅ I've Joined", callback_data="joined_channels")
+        )
+        with open("assets/welcome.jpg", "rb") as photo:
+            await bot.send_photo(message.chat.id, photo, caption="👋 Welcome!\n\nPlease join the required channels to use the bot.", reply_markup=markup)
+        return
 
-    lang_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for code in TEXTS:
-        lang_keyboard.add(types.KeyboardButton(code.upper()))
+    await show_main_menu(message)
 
-    await message.answer(get_text("en", "choose_language"), reply_markup=lang_keyboard)
+@dp.callback_query_handler(lambda c: c.data == "joined_channels")
+async def joined_channels(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await show_main_menu(callback_query.message)
+
+# ---------- UI: Menus ----------
+async def show_main_menu(message: types.Message):
+    markup = InlineKeyboardMarkup(row_width=2).add(
+        InlineKeyboardButton("🌐 Available Websites", callback_data="category_websites"),
+        InlineKeyboardButton("📩 Contact Developer", callback_data="contact_dev"),
+        InlineKeyboardButton("⬇ Start Download", callback_data="start_download"),
+    )
+    await message.answer("🏠 *Main Menu*", parse_mode="Markdown", reply_markup=markup)
+
+async def show_website_categories(message: types.Message):
+    markup = InlineKeyboardMarkup(row_width=2).add(
+        InlineKeyboardButton("📺 Streaming", callback_data="streaming_sites"),
+        InlineKeyboardButton("🎓 Educational", callback_data="edu_sites"),
+        InlineKeyboardButton("📱 Social Media", callback_data="social_sites"),
+        InlineKeyboardButton("🔞 Adult", callback_data="adult_sites"),
+        InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_main")
+    )
+    await message.answer("🌐 *Available Platforms*", parse_mode="Markdown", reply_markup=markup)
+
+@dp.callback_query_handler(lambda c: c.data == "category_websites")
+async def show_websites_handler(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await show_website_categories(callback_query.message)
+
+@dp.callback_query_handler(lambda c: c.data == "back_to_main")
+async def back_to_main_handler(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await show_main_menu(callback_query.message)
+
+@dp.callback_query_handler(lambda c: c.data == "contact_dev")
+async def contact_dev_handler(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await callback_query.message.answer(
+        "👨‍💻 *Developer Info:*\n"
+        "• Name: Vedant\n"
+        "• Telegram: [@VedantDev](https://t.me/VedantDev)",
+        parse_mode="Markdown",
+        disable_web_page_preview=True
+    )
+
+@dp.callback_query_handler(lambda c: c.data in ["streaming_sites", "edu_sites", "social_sites", "adult_sites"])
+async def category_handler(callback_query: types.CallbackQuery):
+    categories = {
+        "streaming_sites": "📺 Streaming Platforms:\nExamples: YouTube, Twitch, etc.",
+        "edu_sites": "🎓 Educational Platforms:\nExamples: Coursera, edX, Udemy",
+        "social_sites": "📱 Social Media:\nExamples: Facebook, Instagram, TikTok",
+        "adult_sites": "🔞 Adult Sites:\nExamples: Pornhub, Xvideos (allowed only if permitted)"
+    }
+    text = categories.get(callback_query.data, "Coming Soon...")
+    markup = InlineKeyboardMarkup().add(
+        InlineKeyboardButton("🔙 Back to Categories", callback_data="category_websites")
+    )
+    await callback_query.message.delete()
+    await callback_query.message.answer(text, reply_markup=markup)
+
+@dp.callback_query_handler(lambda c: c.data == "start_download")
+async def start_download_handler(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.message.delete()
+    await callback_query.message.answer("🔗 Please send the video link you'd like to download.")
     await DownloadState.waiting_for_link.set()
 
+# ---------- Language + Download FSM ----------
 @dp.message_handler(lambda m: m.text.lower() in TEXTS.keys(), state=DownloadState.waiting_for_link)
 async def set_lang(message: types.Message, state: FSMContext):
     lang = message.text.lower()
@@ -141,6 +213,7 @@ async def unknown_cmd(message: types.Message):
     lang = users_col.find_one({"_id": user_id}).get("lang", "en")
     await message.reply(get_text(lang, "unknown_command"))
 
+# ---------- FastAPI Bootstrapping ----------
 app = FastAPI()
 
 @app.get("/")
@@ -153,4 +226,4 @@ async def on_startup():
 
 async def start_polling():
     await dp.start_polling()
-            
+                                             
