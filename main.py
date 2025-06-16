@@ -57,7 +57,7 @@ async def start_cmd(message: types.Message, state: FSMContext):
     await state.finish()
 
     # Force join logic (optional): Replace with your actual channel IDs
-    required_channels = ["@ChannelOne", "@ChannelTwo"]
+    required_channels = ["@Botsassociations", "@heroxstoreofficial"]
     user = await bot.get_chat_member(required_channels[0], user_id)
     if user.status not in ("member", "administrator", "creator"):
         markup = InlineKeyboardMarkup().add(
@@ -110,7 +110,7 @@ async def contact_dev_handler(callback_query: types.CallbackQuery):
     await callback_query.message.answer(
         "👨‍💻 *Developer Info:*\n"
         "• Name: Vedant\n"
-        "• Telegram: [@VedantDev](https://t.me/VedantDev)",
+        "• Telegram: [@Heox_Gfx](https://t.me/Herox_gfx)",
         parse_mode="Markdown",
         disable_web_page_preview=True
     )
