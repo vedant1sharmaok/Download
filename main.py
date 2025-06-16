@@ -56,12 +56,20 @@ async def start_cmd(message: types.Message, state: FSMContext):
     users_col.update_one({"_id": user_id}, {"$setOnInsert": {"lang": "en"}}, upsert=True)
     await state.finish()
 
-    # Force join logic (optional): Replace with your actual channel IDs
     required_channels = ["@Botsassociations", "@heroxstoreofficial"]
-    user = await bot.get_chat_member(required_channels[0], user_id)
-    if user.status not in ("member", "administrator", "creator"):
+
+    not_joined = []
+    for ch in required_channels:
+        try:
+            member = await bot.get_chat_member(ch, user_id)
+            if member.status not in ["member", "administrator", "creator"]:
+                not_joined.append(ch)
+        except:
+            not_joined.append(ch)
+
+    if not_joined:
         markup = InlineKeyboardMarkup().add(
-            *[InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.lstrip('@')}") for ch in required_channels],
+            *[InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.lstrip('@')}") for ch in not_joined],
             InlineKeyboardButton("✅ I've Joined", callback_data="joined_channels")
         )
         with open("assets/welcome.jpg", "rb") as photo:
@@ -72,6 +80,22 @@ async def start_cmd(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(lambda c: c.data == "joined_channels")
 async def joined_channels(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    required_channels = ["@Botsassociations", "@heroxstoreofficial"]
+
+    not_joined = []
+    for ch in required_channels:
+        try:
+            member = await bot.get_chat_member(ch, user_id)
+            if member.status not in ["member", "administrator", "creator"]:
+                not_joined.append(ch)
+        except:
+            not_joined.append(ch)
+
+    if not_joined:
+        await callback_query.answer("❌ You must join all required channels!", show_alert=True)
+        return
+
     await callback_query.message.delete()
     await show_main_menu(callback_query.message)
 
@@ -110,7 +134,7 @@ async def contact_dev_handler(callback_query: types.CallbackQuery):
     await callback_query.message.answer(
         "👨‍💻 *Developer Info:*\n"
         "• Name: Vedant\n"
-        "• Telegram: [@Heox_Gfx](https://t.me/Herox_gfx)",
+        "• Telegram: [@Herox_Gfx](https://t.me/Herox_gfx)",
         parse_mode="Markdown",
         disable_web_page_preview=True
     )
@@ -226,4 +250,4 @@ async def on_startup():
 
 async def start_polling():
     await dp.start_polling()
-                                             
+        
