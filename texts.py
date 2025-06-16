@@ -1,127 +1,137 @@
 # texts.py
 
 TEXTS = {
-    "en": {
-        "start": "👋 *Welcome to the Ultimate Downloader Bot*",
-        "choose_language": "🌐 *Please choose your language:*",
-        "language_selected": "✅ Language set to *English*",
-        "guide": (
-            "🎥 Send me any video or audio link from platforms like *YouTube, Spotify, Reso, Facebook, Instagram,* and more\n\n"
-            "⚙️ I'll detect the platform and show you download options\n"
-            "⬇️ You can choose the quality or format you prefer\n"
-            "📥 I’ll then download and send the file to you — fast and easy\n\n"
-            "🛠 Admins can use /broadcast to send messages to all users"
-        ),
-        "choose_format": "🎚 *Select the format or quality:*",
-        "btn_audio": "🎵 Audio Only",
-        "downloading": "⏳ Downloading your file  Please wait",
-        "error": "❌ *Error:* ",
-        "lang_switched": "✅ Language changed successfully",
-        "unsupported": "⚠️ Sorry, this link is not supported yet",
-        "spotify_audio": "🎧 Spotify audio available:",
-        "unknown_command": "❓ I didn't understand that Please send a valid link or use /help",
+    "English": {
+        "start": "👋 Welcome! Send me a video link to download.",
+        "choose_format": "🎞 Choose the format you want:",
+        "choose_quality": "🔽 Choose the quality you prefer:",
+        "guide": "📌 You can send a video link directly. I will detect and download it.",
+        "error": "❌ Error:\n",
+        "file_too_large": "❌ File too large to send via Telegram (max 2GB).",
+        "download_started": "⏬ Download started...",
+        "download_complete": "✅ Download complete! Sending file...",
+        "unsupported": "🚫 Unsupported or unrecognized link.",
+        "language_selected": "✅ Language set to English.",
+        "unknown_command": "🤖 Unknown command. Please send a valid video link or use the buttons below.",
     },
-    "hi": {
-        "start": "👋 *डाउनलोडर बॉट में आपका स्वागत है!*",
-        "choose_language": "🌐 *कृपया अपनी भाषा चुनें:*",
-        "language_selected": "✅ भाषा हिंदी में सेट की गई है।",
-        "guide": (
-            "🎥 YouTube, Spotify, Reso, Facebook, Instagram जैसी साइट्स से लिंक भेजें।\n\n"
-            "⚙️ मैं लिंक पहचानूंगा और विकल्प दिखाऊंगा।\n"
-            "⬇️ आप फ़ॉर्मेट या क्वालिटी चुन सकते हैं।\n"
-            "📥 फिर मैं मीडिया डाउनलोड करके आपको भेजूंगा।\n\n"
-            "🛠 /broadcast का उपयोग एडमिन द्वारा सभी यूज़र्स को मैसेज भेजने के लिए किया जा सकता है।"
-        ),
-        "choose_format": "🎚 *फ़ॉर्मेट या गुणवत्ता चुनें:*",
-        "btn_audio": "🎵 केवल ऑडियो",
-        "downloading": "⏳ डाउनलोड हो रहा है... कृपया प्रतीक्षा करें।",
-        "error": "❌ *त्रुटि:* ",
-        "lang_switched": "✅ भाषा सफलतापूर्वक बदली गई।",
-        "unsupported": "⚠️ क्षमा करें, यह लिंक समर्थित नहीं है।",
-        "spotify_audio": "🎧 Spotify ऑडियो उपलब्ध:",
-        "unknown_command": "❓ कृपया एक मान्य लिंक भेजें या /help का उपयोग करें।",
+    "हिन्दी": {
+        "start": "👋 स्वागत है! डाउनलोड करने के लिए मुझे एक वीडियो लिंक भेजें।",
+        "choose_format": "🎞 आप किस फ़ॉर्मेट में डाउनलोड करना चाहते हैं?",
+        "choose_quality": "🔽 अपनी पसंदीदा क्वालिटी चुनें:",
+        "guide": "📌 आप सीधे वीडियो लिंक भेज सकते हैं। मैं उसे पहचान कर डाउनलोड करूँगा।",
+        "error": "❌ त्रुटि:\n",
+        "file_too_large": "❌ फ़ाइल बहुत बड़ी है, टेलीग्राम के माध्यम से नहीं भेज सकते (अधिकतम 2GB)।",
+        "download_started": "⏬ डाउनलोड शुरू हो गया है...",
+        "download_complete": "✅ डाउनलोड पूरा हुआ! फ़ाइल भेजी जा रही है...",
+        "unsupported": "🚫 असमर्थित या अपरिचित लिंक।",
+        "language_selected": "✅ भाषा हिंदी में सेट हो गई है।",
+        "unknown_command": "🤖 अज्ञात कमांड। कृपया एक मान्य वीडियो लिंक भेजें या नीचे दिए गए बटन का उपयोग करें।",
     },
-    "es": {
-        "start": "👋 *¡Bienvenido al Bot de Descargas!*",
-        "choose_language": "🌐 *Por favor, elige tu idioma:*",
-        "language_selected": "✅ Idioma establecido a *Español*.",
-        "guide": (
-            "🎥 Envíame cualquier enlace de video o audio de *YouTube, Spotify, Reso, Facebook, Instagram* y más.\n\n"
-            "⚙️ Detectaré la plataforma y te mostraré las opciones.\n"
-            "⬇️ Puedes elegir la calidad o formato que prefieras.\n"
-            "📥 Luego te enviaré el archivo descargado.\n\n"
-            "🛠 Los administradores pueden usar /broadcast para enviar mensajes a todos."
-        ),
-        "choose_format": "🎚 *Selecciona el formato o calidad:*",
-        "btn_audio": "🎵 Solo Audio",
-        "downloading": "⏳ Descargando tu archivo... Por favor espera.",
-        "error": "❌ *Error:* ",
-        "lang_switched": "✅ Idioma cambiado con éxito.",
-        "unsupported": "⚠️ Lo siento, este enlace no es compatible todavía.",
-        "spotify_audio": "🎧 Audio de Spotify disponible:",
-        "unknown_command": "❓ No entendí eso. Envía un enlace válido o usa /help.",
+    "Español": {
+        "start": "👋 ¡Bienvenido! Envíame un enlace de video para descargar.",
+        "choose_format": "🎞 Elige el formato que deseas:",
+        "choose_quality": "🔽 Elige la calidad que prefieras:",
+        "guide": "📌 Puedes enviarme un enlace de video directamente. Lo detectaré y descargaré.",
+        "error": "❌ Error:\n",
+        "file_too_large": "❌ El archivo es demasiado grande para enviarlo por Telegram (máx 2GB).",
+        "download_started": "⏬ Descarga iniciada...",
+        "download_complete": "✅ ¡Descarga completa! Enviando archivo...",
+        "unsupported": "🚫 Enlace no soportado o no reconocido.",
+        "language_selected": "✅ Idioma configurado a Español.",
+        "unknown_command": "🤖 Comando desconocido. Por favor, envía un enlace válido o usa los botones abajo.",
     },
-    "ar": {
-        "start": "👋 *مرحبًا بك في بوت التحميل الشامل!*",
-        "choose_language": "🌐 *يرجى اختيار لغتك:*",
-        "language_selected": "✅ تم تعيين اللغة إلى *العربية*.",
-        "guide": (
-            "🎥 أرسل لي أي رابط فيديو أو صوت من *YouTube, Spotify, Reso, Facebook, Instagram* والمزيد.\n\n"
-            "⚙️ سأكتشف المنصة وأعرض لك خيارات التنزيل.\n"
-            "⬇️ اختر الجودة أو التنسيق الذي تفضله.\n"
-            "📥 ثم سأرسل لك الملف الذي تم تنزيله.\n\n"
-            "🛠 يمكن للمسؤولين استخدام /broadcast لإرسال رسائل إلى جميع المستخدمين."
-        ),
-        "choose_format": "🎚 *اختر التنسيق أو الجودة:*",
-        "btn_audio": "🎵 صوت فقط",
-        "downloading": "⏳ يتم التنزيل... الرجاء الانتظار.",
-        "error": "❌ *خطأ:* ",
-        "lang_switched": "✅ تم تغيير اللغة بنجاح!",
-        "unsupported": "⚠️ عذرًا، هذا الرابط غير مدعوم حالياً.",
-        "spotify_audio": "🎧 صوت Spotify متاح:",
-        "unknown_command": "❓ لم أفهم. أرسل رابطًا صالحًا أو استخدم /help.",
+    "العربية": {
+        "start": "👋 مرحباً! أرسل لي رابط الفيديو لتحميله.",
+        "choose_format": "🎞 اختر الصيغة التي تريدها:",
+        "choose_quality": "🔽 اختر الجودة التي تفضلها:",
+        "guide": "📌 يمكنك إرسال رابط الفيديو مباشرة. سأقوم بالكشف عنه وتنزيله.",
+        "error": "❌ خطأ:\n",
+        "file_too_large": "❌ الملف كبير جداً لإرساله عبر تيليجرام (الحد الأقصى 2 جيجابايت).",
+        "download_started": "⏬ بدء التحميل...",
+        "download_complete": "✅ تم التحميل! جاري إرسال الملف...",
+        "unsupported": "🚫 الرابط غير مدعوم أو غير معروف.",
+        "language_selected": "✅ تم تعيين اللغة إلى العربية.",
+        "unknown_command": "🤖 أمر غير معروف. أرسل رابط فيديو صحيح أو استخدم الأزرار بالأسفل.",
     },
-    "fr": {
-        "start": "👋 *Bienvenue sur le Bot de Téléchargement !*",
-        "choose_language": "🌐 *Veuillez choisir votre langue :*",
-        "language_selected": "✅ Langue définie sur *Français*.",
-        "guide": (
-            "🎥 Envoyez-moi un lien vidéo ou audio de *YouTube, Spotify, Reso, Facebook, Instagram,* etc.\n\n"
-            "⚙️ Je détecterai la plateforme et vous proposerai des options.\n"
-            "⬇️ Vous pourrez choisir la qualité ou le format.\n"
-            "📥 Je vous enverrai ensuite le fichier téléchargé.\n\n"
-            "🛠 Les administrateurs peuvent utiliser /broadcast pour envoyer un message à tous les utilisateurs."
-        ),
-        "choose_format": "🎚 *Choisissez le format ou la qualité :*",
-        "btn_audio": "🎵 Audio Seulement",
-        "downloading": "⏳ Téléchargement en cours... Veuillez patienter.",
-        "error": "❌ *Erreur :* ",
-        "lang_switched": "✅ Langue changée avec succès !",
-        "unsupported": "⚠️ Désolé, ce lien n'est pas encore pris en charge.",
-        "spotify_audio": "🎧 Audio Spotify disponible :",
-        "unknown_command": "❓ Je n’ai pas compris. Envoyez un lien valide ou utilisez /help.",
+    "Français": {
+        "start": "👋 Bienvenue ! Envoyez-moi un lien vidéo à télécharger.",
+        "choose_format": "🎞 Choisissez le format souhaité :",
+        "choose_quality": "🔽 Choisissez la qualité souhaitée :",
+        "guide": "📌 Vous pouvez envoyer un lien vidéo directement. Je vais le détecter et le télécharger.",
+        "error": "❌ Erreur :\n",
+        "file_too_large": "❌ Fichier trop volumineux pour être envoyé sur Telegram (max 2 Go).",
+        "download_started": "⏬ Téléchargement démarré...",
+        "download_complete": "✅ Téléchargement terminé ! Envoi du fichier...",
+        "unsupported": "🚫 Lien non pris en charge ou non reconnu.",
+        "language_selected": "✅ Langue définie sur le français.",
+        "unknown_command": "🤖 Commande inconnue. Veuillez envoyer un lien valide ou utiliser les boutons ci-dessous.",
     },
-    "ru": {
-        "start": "👋 *Добро пожаловать в Бот Загрузок!*",
-        "choose_language": "🌐 *Пожалуйста, выберите язык:*",
-        "language_selected": "✅ Язык установлен на *Русский*.",
-        "guide": (
-            "🎥 Отправьте мне любую ссылку на видео или аудио с *YouTube, Spotify, Reso, Facebook, Instagram* и др.\n\n"
-            "⚙️ Я определю платформу и предложу варианты.\n"
-            "⬇️ Выберите нужный формат или качество.\n"
-            "📥 Я скачаю и отправлю вам файл.\n\n"
-            "🛠 Админы могут использовать /broadcast для рассылки всем пользователям."
-        ),
-        "choose_format": "🎚 *Выберите формат или качество:*",
-        "btn_audio": "🎵 Только аудио",
-        "downloading": "⏳ Идет загрузка... Пожалуйста, подождите.",
-        "error": "❌ *Ошибка:* ",
-        "lang_switched": "✅ Язык успешно изменен!",
-        "unsupported": "⚠️ Извините, эта ссылка пока не поддерживается.",
-        "spotify_audio": "🎧 Spotify аудио доступно:",
-        "unknown_command": "❓ Я не понял. Пожалуйста, отправьте правильную ссылку или используйте /help.",
+    "Русский": {
+        "start": "👋 Добро пожаловать! Отправьте мне ссылку на видео для загрузки.",
+        "choose_format": "🎞 Выберите желаемый формат:",
+        "choose_quality": "🔽 Выберите нужное качество:",
+        "guide": "📌 Просто отправьте мне ссылку на видео. Я её обработаю и загружу.",
+        "error": "❌ Ошибка:\n",
+        "file_too_large": "❌ Файл слишком большой для отправки через Telegram (макс 2 ГБ).",
+        "download_started": "⏬ Начинаю загрузку...",
+        "download_complete": "✅ Загрузка завершена! Отправляю файл...",
+        "unsupported": "🚫 Неподдерживаемая или неизвестная ссылка.",
+        "language_selected": "✅ Язык установлен на русский.",
+        "unknown_command": "🤖 Неизвестная команда. Пожалуйста, отправьте корректную ссылку или используйте кнопки ниже.",
+    },
+    "中文": {
+        "start": "👋 欢迎！请发送要下载的视频链接。",
+        "choose_format": "🎞 请选择你想要的格式：",
+        "choose_quality": "🔽 请选择你想要的清晰度：",
+        "guide": "📌 你可以直接发送视频链接，我会识别并下载。",
+        "error": "❌ 错误:\n",
+        "file_too_large": "❌ 文件过大，无法通过 Telegram 发送（最大 2GB）。",
+        "download_started": "⏬ 开始下载...",
+        "download_complete": "✅ 下载完成！正在发送文件...",
+        "unsupported": "🚫 不支持或无法识别的链接。",
+        "language_selected": "✅ 语言设置为中文。",
+        "unknown_command": "🤖 未知命令。请发送有效的视频链接或使用下方按钮。",
+    },
+    "বাংলা": {
+        "start": "👋 স্বাগতম! ডাউনলোডের জন্য একটি ভিডিও লিঙ্ক পাঠান।",
+        "choose_format": "🎞 আপনি কোন ফরম্যাটে চান তা বেছে নিন:",
+        "choose_quality": "🔽 আপনার পছন্দের কোয়ালিটি বেছে নিন:",
+        "guide": "📌 আপনি সরাসরি একটি ভিডিও লিঙ্ক পাঠাতে পারেন। আমি এটি শনাক্ত করে ডাউনলোড করব।",
+        "error": "❌ ত্রুটি:\n",
+        "file_too_large": "❌ ফাইলটি অনেক বড়, Telegram-এ পাঠানো যাবে না (সীমা 2GB)।",
+        "download_started": "⏬ ডাউনলোড শুরু হয়েছে...",
+        "download_complete": "✅ ডাউনলোড সম্পন্ন! ফাইল পাঠানো হচ্ছে...",
+        "unsupported": "🚫 সমর্থিত নয় বা অপরিচিত লিঙ্ক।",
+        "language_selected": "✅ ভাষা বাংলা সেট করা হয়েছে।",
+        "unknown_command": "🤖 অজানা কমান্ড। অনুগ্রহ করে একটি বৈধ ভিডিও লিঙ্ক পাঠান বা নিচের বোতাম ব্যবহার করুন।",
+    },
+    "Português": {
+        "start": "👋 Bem-vindo! Envie um link de vídeo para baixar.",
+        "choose_format": "🎞 Escolha o formato desejado:",
+        "choose_quality": "🔽 Escolha a qualidade desejada:",
+        "guide": "📌 Você pode me enviar um link de vídeo diretamente. Eu vou detectar e baixar.",
+        "error": "❌ Erro:\n",
+        "file_too_large": "❌ Arquivo muito grande para enviar pelo Telegram (máx 2GB).",
+        "download_started": "⏬ Iniciando download...",
+        "download_complete": "✅ Download concluído! Enviando arquivo...",
+        "unsupported": "🚫 Link não suportado ou não reconhecido.",
+        "language_selected": "✅ Idioma definido para português.",
+        "unknown_command": "🤖 Comando desconhecido. Por favor, envie um link válido ou use os botões abaixo.",
+    },
+    "Bahasa Indonesia": {
+        "start": "👋 Selamat datang! Kirimkan tautan video untuk diunduh.",
+        "choose_format": "🎞 Pilih format yang Anda inginkan:",
+        "choose_quality": "🔽 Pilih kualitas yang Anda inginkan:",
+        "guide": "📌 Anda dapat langsung mengirimkan tautan video. Saya akan mendeteksi dan mengunduhnya.",
+        "error": "❌ Kesalahan:\n",
+        "file_too_large": "❌ File terlalu besar untuk dikirim lewat Telegram (maks 2GB).",
+        "download_started": "⏬ Memulai pengunduhan...",
+        "download_complete": "✅ Unduhan selesai! Mengirim file...",
+        "unsupported": "🚫 Tautan tidak didukung atau tidak dikenali.",
+        "language_selected": "✅ Bahasa diatur ke Bahasa Indonesia.",
+        "unknown_command": "🤖 Perintah tidak dikenal. Silakan kirim tautan video yang valid atau gunakan tombol di bawah.",
     }
 }
 
 def get_text(lang, key):
-    return TEXTS.get(lang, TEXTS["en"]).get(key, key)
+    return TEXTS.get(lang, TEXTS["English"]).get(key, key)
