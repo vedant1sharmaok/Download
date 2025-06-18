@@ -1,11 +1,15 @@
 import os
 import yt_dlp
+import asyncio
 from aiogram.types import Message
 
 DOWNLOAD_DIR = "./downloads"
-MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2GB in bytes
+MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2GB
+
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 
+# ✅ Original hook (not thread-safe inside yt_dlp)
 def build_telegram_progress_hook(message: Message):
     async def progress_hook(d):
         if d['status'] == 'downloading':
@@ -18,56 +22,52 @@ def build_telegram_progress_hook(message: Message):
             except:
                 pass
         elif d['status'] == 'finished':
-            await message.edit_text("✅ Download finished. Preparing file...")
+            try:
+                await message.edit_text("✅ Download finished. Preparing file...", parse_mode="Markdown")
+            except:
+                pass
 
     return progress_hook
 
 
-async def download_media(url: str, tg_msg: Message, format_code: str = "best") -> str:
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+# ✅ Thread-safe wrapper for use inside yt_dlp hooks
+def create_progress_hook(bot, chat_id, message_id, loop):
+    def hook(d):
+        if d['status'] == 'downloading':
+            percent = d.get('_percent_str', '').strip()
+            speed = d.get('_speed_str', '').strip()
+            eta = d.get('eta', '?')
+            text = f"📥 Downloading: {percent} at {speed} | ETA: {eta}s"
 
-    # Optional audio-only conversion
+            async def update():
+                try:
+                    await bot.edit_message_text(text, chat_id, message_id)
+                except:
+                    pass
+
+            loop.call_soon_threadsafe(asyncio.create_task, update())
+
+        elif d['status'] == 'finished':
+            async def done():
+                try:
+                    await bot.edit_message_text("✅ Download finished. Preparing file...", chat_id, message_id)
+                except:
+                    pass
+
+            loop.call_soon_threadsafe(asyncio.create_task, done())
+
+    return hook
+
+
+# ✅ Download using Telegram message context
+async def download_media(url: str, tg_msg: Message, format_code: str = "best") -> str:
+    # Audio-only conversion
     postprocessors = [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
         'preferredquality': '192',
     }] if 'audio' in format_code else []
 
-    ydl_opts = {
-        'format': format_code,
-        'outtmpl': f'{DOWNLOAD_DIR}/%(title)s.%(ext)s',
-        'noplaylist': True,
-        'progress_hooks': [lambda d: tg_msg.bot.loop.create_task(build_telegram_progress_hook(tg_msg)(d))],
-        'quiet': True,
-        'postprocessors': postprocessors,
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        file_path = ydl.prepare_filename(info)
-
-        # Adjust path if audio was postprocessed
-        if 'audio' in format_code:
-            file_path = os.path.splitext(file_path)[0] + '.mp3'
-
-        # Check file size
-        if os.path.getsize(file_path) > MAX_FILE_SIZE:
-            os.remove(file_path)
-            await tg_msg.reply("❌ File is larger than 2GB and cannot be sent via Telegram.")
-            return None
-
-        return file_path
-
-
-async def download_spotify(url: str) -> str:
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
-    output_dir = os.path.abspath(DOWNLOAD_DIR)
-    os.system(f"spotdl download '{url}' --output {output_dir}")
-
-    files = sorted(
-        os.listdir(output_dir),
-        key=lambda x: os.path.getmtime(os.path.join(output_dir, x)),
-        reverse=True
-    )
-    return os.path.join(output_dir, files[0]) if files else None
+    # Progress Hook (runs async updates safely)
+    hook = create_progress_hook(tg_msg.bot, tg_msg.chat.id, tg_msg.message_id, asyncio.ge
             
