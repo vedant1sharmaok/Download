@@ -67,14 +67,20 @@ async def start_cmd(message: types.Message, state: FSMContext):
         except:
             not_joined.append(ch)
 
-    if not_joined:
-        markup = InlineKeyboardMarkup().add(
-            *[InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.lstrip('@')}") for ch in not_joined],
-            InlineKeyboardButton("✅ I've Joined", callback_data="joined_channels")
+    # Always send welcome image regardless of join status
+    markup = InlineKeyboardMarkup().add(
+        *[InlineKeyboardButton(f"Join {ch}", url=f"https://t.me/{ch.lstrip('@')}") for ch in required_channels],
+        InlineKeyboardButton("✅ I've Joined", callback_data="joined_channels")
+    )
+    with open("assets/welcome.jpg", "rb") as photo:
+        await bot.send_photo(
+            message.chat.id,
+            photo,
+            caption="👋 Welcome!\n\nPlease join the required channels to continue using the bot.",
+            reply_markup=markup
         )
-        with open("assets/welcome.jpg", "rb") as photo:
-            await bot.send_photo(message.chat.id, photo, caption="👋 Welcome!\n\nPlease join the required channels to use the bot.", reply_markup=markup)
-        return
+    return
+
 
     await show_main_menu(message)
 
